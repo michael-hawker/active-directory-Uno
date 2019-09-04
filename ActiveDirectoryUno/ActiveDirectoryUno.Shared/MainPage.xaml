@@ -11,25 +11,25 @@
         <StackPanel x:Name="slUser" Visibility="Collapsed" Padding="5,10" VerticalAlignment="Top" Margin="0,50,0,0">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="DisplayName " FontWeight="Bold" />
-                <TextBlock x:Name="lblDisplayName" />
+                <TextBlock Text="{x:Bind Me.DisplayName, Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="GivenName " FontWeight="Bold" />
-                <TextBlock x:Name="lblGivenName" />
+                <TextBlock Text="{x:Bind Me.GivenName, Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Surname " FontWeight="Bold" />
-                <TextBlock x:Name="lblSurname" />
+                <TextBlock Text="{x:Bind Me.Surname, Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Id " FontWeight="Bold" />
-                <TextBlock x:Name="lblId" />
+                <TextBlock Text="{x:Bind Me.Id, Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="UserPrincipalName " FontWeight="Bold" />
-                <TextBlock x:Name="lblUserPrincipalName" />
+                <TextBlock Text="{x:Bind Me.UserPrincipalName, Mode=OneWay}" />
             </StackPanel>
         </StackPanel>
-        <Button x:Name="btnSignInSignOut" Content="Sign in" Click="OnSignInSignOut" VerticalAlignment="Bottom" Margin="30"/>
+        <Button x:Name="btnGetData" Content="Get Data" Click="OnGetData" VerticalAlignment="Bottom" Margin="30"/>
     </Grid>
 </Page>

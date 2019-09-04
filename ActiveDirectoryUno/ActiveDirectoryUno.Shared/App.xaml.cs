@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Microsoft.Graph.Auth;
 using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
@@ -26,6 +28,8 @@ namespace ActiveDirectoryUno
     sealed partial class App : Application
     {
         public static IPublicClientApplication PCA = null;
+
+        public static GraphServiceClient Graph = null;
 
         /// <summary>
         /// The ClientID is the Application ID found in the portal (https://go.microsoft.com/fwlink/?linkid=2083908). 
@@ -55,10 +59,17 @@ namespace ActiveDirectoryUno
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-
-            PCA = PublicClientApplicationBuilder.Create(ClientID)
+            PCA = PublicClientApplicationBuilder
+                .Create(ClientID)
                 .WithRedirectUri($"msal{App.ClientID}://auth")
+#if __ANDROID__
+                .WithParentActivityOrWindow(() => Uno.UI.ContextHelper.Current as Android.App.Activity)
+#endif
                 .Build();
+
+            InteractiveAuthenticationProvider authenticationProvider = new InteractiveAuthenticationProvider(PCA, Scopes);
+
+            Graph = new GraphServiceClient(authenticationProvider);
 
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)

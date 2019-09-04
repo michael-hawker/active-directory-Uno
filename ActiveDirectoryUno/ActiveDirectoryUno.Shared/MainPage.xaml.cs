@@ -1,4 +1,5 @@
-﻿using Microsoft.Identity.Client;
+﻿using Microsoft.Graph;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -27,95 +28,37 @@ namespace ActiveDirectoryUno
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        public User Me
+        {
+            get { return (User)GetValue(MeProperty); }
+            set { SetValue(MeProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for Me.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty MeProperty =
+            DependencyProperty.Register(nameof(Me), typeof(User), typeof(MainPage), new PropertyMetadata(null));
+
         public MainPage()
         {
             this.InitializeComponent();
         }
 
-        async void OnSignInSignOut(object sender, RoutedEventArgs e)
+        async void OnGetData(object sender, RoutedEventArgs e)
         {
-            AuthenticationResult authResult = null;
-            IEnumerable<IAccount> accounts = await App.PCA.GetAccountsAsync();
             try
             {
-                if (btnSignInSignOut.Content as string == "Sign in")
-                {
-                    // let's see if we have a user in our belly already
-                    try
-                    {
-                        IAccount firstAccount = accounts.FirstOrDefault();
-                        authResult = await App.PCA.AcquireTokenSilent(App.Scopes, firstAccount)
-                                              .ExecuteAsync();
-                        await RefreshUserDataAsync(authResult.AccessToken).ConfigureAwait(false);
-                        Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => { btnSignInSignOut.Content = "Sign out"; });
-                    }
-                    catch (MsalUiRequiredException ex)
-                    {
-                        try
-                        {
-                            authResult = await App.PCA.AcquireTokenInteractive(App.Scopes)
-#if __ANDROID__
-                                                      .WithParentActivityOrWindow(Uno.UI.ContextHelper.Current as Android.App.Activity)
-#endif
-                                                      .ExecuteAsync();
-
-                            await RefreshUserDataAsync(authResult.AccessToken);
-                            Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => { btnSignInSignOut.Content = "Sign out"; });
-                        }
-                        catch (Exception ex2)
-                        {
-
-                        }
-                    }
-                }
-                else
-                {
-                    while (accounts.Any())
-                    {
-                        await App.PCA.RemoveAsync(accounts.FirstOrDefault());
-                        accounts = await App.PCA.GetAccountsAsync();
-                    }
-
-                    slUser.Visibility = Visibility.Collapsed;
-                    Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => { btnSignInSignOut.Content = "Sign in"; });
-                }
+                Me = await App.Graph.Me.Request().GetAsync();
+                slUser.Visibility = Visibility.Visible;
             }
             catch (Exception ex)
             {
-
-            }
-        }
-
-        public async Task RefreshUserDataAsync(string token)
-        {
-            //get data from API
-            HttpClient client = new HttpClient();
-            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
-            message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("bearer", token);
-            HttpResponseMessage response = await client.SendAsync(message);
-            string responseString = await response.Content.ReadAsStringAsync();
-            if (response.IsSuccessStatusCode)
-            {
-                JObject user = JObject.Parse(responseString);
-
-                slUser.Visibility = Visibility.Visible;
-
-                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
-                {
-
-                    lblDisplayName.Text = user["displayName"].ToString();
-                    lblGivenName.Text = user["givenName"].ToString();
-                    lblId.Text = user["id"].ToString();
-                    lblSurname.Text = user["surname"].ToString();
-                    lblUserPrincipalName.Text = user["userPrincipalName"].ToString();
-
-                    // just in case
-                    btnSignInSignOut.Content = "Sign out";
-                });
-            }
-            else
-            {
-                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => (new ContentDialog { Title = "Something went wrong with the API call", Content = responseString, CloseButtonText = "Dismiss" }).ShowAsync());
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, 
+                    async () => 
+                    await new ContentDialog { 
+                        Title = "Something went wrong with the API call", 
+                        Content = ex.Message, 
+                        CloseButtonText = "Dismiss" 
+                    }.ShowAsync());
             }
         }
     }
